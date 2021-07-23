@@ -30,7 +30,7 @@ jobs:
         uses: machulav/ec2-github-runner@v2.2.0
         with:
           mode: start
-          github-token: ${{ secrets.ZAMA_GH_ACTIONS }}
+          github-token: ${{ secrets.CONCRETE_ACTIONS_TOKEN }}
           ec2-image-id: ami-0ad14d9cfbfb4a07b
           ec2-instance-type: m5.2xlarge
           subnet-id: subnet-da319dd4
@@ -62,7 +62,7 @@ jobs:
       if: ${{ !cancelled() }}
       uses: actions-rs/toolchain@v1
       with:
-        toolchain: nightly
+        toolchain: stable
         override: true
     - name: Run concrete tests
       uses: actions-rs/cargo@v1
@@ -70,21 +70,6 @@ jobs:
       with:
         command: test
         args: --release --no-fail-fast --lib --all-features
-      env:
-        CARGO_INCREMENTAL: '0'
-        RUSTFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
-        RUSTDOCFLAGS: '-Zprofile -Ccodegen-units=1 -Cinline-threshold=0 -Clink-dead-code -Coverflow-checks=off -Cpanic=abort -Zpanic_abort_tests'
-    - name: Coverage
-      if: ${{ !cancelled() }}
-      uses: actions-rs/grcov@v0.1
-      with:  
-        config: grcov.yml
-    - name: Coveralls upload
-      if: ${{ !cancelled() }}
-      uses: coverallsapp/github-action@master
-      with:
-        github-token: ${{ secrets.GITHUB_TOKEN }}
-        path-to-lcov: ./lcov.info
 
   stop-runner:
     name: Stop EC2 runner
@@ -103,7 +88,7 @@ jobs:
       - name: Stop EC2 runner
         uses: machulav/ec2-github-runner@v2.2.0
         with:
-          github-token: ${{ secrets.ZAMA_GH_ACTIONS }}
+          github-token: ${{ secrets.CONCRETE_ACTIONS_TOKEN }}
           label: ${{ needs.start-runner.outputs.label }}
           ec2-instance-id: ${{ needs.start-runner.outputs.ec2-instance-id }}
           mode: stop
