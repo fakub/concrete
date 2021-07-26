@@ -55,9 +55,24 @@ jobs:
       if: ${{ !cancelled() }}
       run: |
         echo "HOME=/home/ubuntu" >> ${GITHUB_ENV}
-    - name: Install Fftw
+    - name: Update aptitude
+      if: ${{ !cancelled() }}
+      run: sudo apt-get update
+    - name: Install build_essential
+      if: ${{ !cancelled() }}
+      run: sudo apt-get install -y build-essential
+    - name: Install clang
+      if: ${{ !cancelled() }}
+      run: sudo apt-get install -y libclang-dev
+    - name: Install fftw3
       if: ${{ !cancelled() }}
       run: sudo apt-get install -y libfftw3-dev
+    - name: Install openssl
+      if: ${{ !cancelled() }}
+      run: sudo apt-get install -y openssl
+    - name: Install pkgconf
+      if: ${{ !cancelled() }}
+      run: sudo apt-get install -y pkgconf
     - name: Install Rust
       if: ${{ !cancelled() }}
       uses: actions-rs/toolchain@v1
