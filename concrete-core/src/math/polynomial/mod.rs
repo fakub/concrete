@@ -32,6 +32,7 @@ pub struct MonomialDegree(pub usize);
 ///
 /// Assuming a polynomial $a_0 + a_1X + /dots + a_nX^N$, this returns $N+1$.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[repr(C)]
 pub struct PolynomialSize(pub usize);
 
 /// The number of polynomials in a polynomial list.

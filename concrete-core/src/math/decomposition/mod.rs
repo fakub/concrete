@@ -36,12 +36,14 @@ pub use term::*;
 /// When decomposing an integer over powers of the $B=2^b$ basis, this type represents the $b$
 /// value.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+#[repr(C)]
 pub struct DecompositionBaseLog(pub usize);
 
 /// The number of levels used in a decomposition.
 ///
 /// When decomposing an integer over the $l$ levels, this type represents the $l$ value.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Deserialize, Serialize)]
+#[repr(C)]
 pub struct DecompositionLevelCount(pub usize);
 
 /// The level of a given term of a decomposition.

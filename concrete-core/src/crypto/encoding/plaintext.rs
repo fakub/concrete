@@ -7,7 +7,7 @@ use crate::{ck_dim_div, tensor_traits};
 
 /// An plaintext (encoded) value.
 #[derive(Debug, Copy, Clone, PartialEq, Eq)]
-#[repr(transparent)]
+#[repr(C)]
 pub struct Plaintext<T: Numeric>(pub T);
 
 /// A list of plaintexts

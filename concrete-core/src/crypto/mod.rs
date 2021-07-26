@@ -15,18 +15,22 @@ pub mod secret;
 
 /// The number plaintexts in a plaintext list.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[repr(C)]
 pub struct PlaintextCount(pub usize);
 
 /// The number messages in a messages list.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[repr(C)]
 pub struct CleartextCount(pub usize);
 
 /// The number of ciphertexts in a ciphertext list.
 #[derive(Copy, Clone, Eq, PartialEq, Debug, Serialize, Deserialize)]
+#[repr(C)]
 pub struct CiphertextCount(pub usize);
 
 /// The number of scalar in an LWE mask + 1 .
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]
+#[repr(C)]
 pub struct LweSize(pub usize);
 
 impl LweSize {
@@ -49,6 +53,7 @@ impl LweDimension {
 
 /// The number of polynomials of an GLWE mask + 1.
 #[derive(Debug, PartialEq, Eq, Copy, Clone, Serialize, Deserialize)]
+#[repr(C)]
 pub struct GlweSize(pub usize);
 
 impl GlweSize {

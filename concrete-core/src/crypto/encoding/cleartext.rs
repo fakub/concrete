@@ -6,6 +6,7 @@ use crate::{ck_dim_div, tensor_traits};
 
 /// A clear, non-encoded, value.
 #[derive(Copy, Clone, Debug, PartialEq, Eq)]
+#[repr(C)]
 pub struct Cleartext<T: Numeric>(pub T);
 
 /// A list of clear, non-encoded, values.
