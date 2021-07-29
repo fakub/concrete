@@ -67,12 +67,6 @@ jobs:
     - name: Install fftw3
       if: ${{ !cancelled() }}
       run: sudo apt-get install -y libfftw3-dev
-    - name: Install openssl
-      if: ${{ !cancelled() }}
-      run: sudo apt-get install -y openssl
-    - name: Install pkgconf
-      if: ${{ !cancelled() }}
-      run: sudo apt-get install -y pkgconf
     - name: Install Rust
       if: ${{ !cancelled() }}
       uses: actions-rs/toolchain@v1
