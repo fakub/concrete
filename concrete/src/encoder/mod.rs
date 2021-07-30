@@ -30,6 +30,7 @@ pub struct Encoder {
     pub nb_bit_precision: usize,
     pub nb_bit_padding: usize,
     pub round: bool,
+    pub negacyclic: bool,
 }
 
 impl Encoder {
@@ -77,6 +78,7 @@ impl Encoder {
             nb_bit_precision,
             nb_bit_padding,
             round: false,
+            negacyclic: false,
         })
     }
 
@@ -109,6 +111,7 @@ impl Encoder {
         max: f64,
         nb_bit_precision: usize,
         nb_bit_padding: usize,
+        negacyclic: bool,
     ) -> Result<Encoder, CryptoAPIError> {
         if min >= max {
             return Err(MinMaxError!(min, max));
@@ -125,6 +128,7 @@ impl Encoder {
             nb_bit_precision,
             nb_bit_padding,
             round: true,
+            negacyclic,
         })
     }
 
@@ -295,6 +299,7 @@ impl Encoder {
             nb_bit_precision: 0,
             nb_bit_padding: 0,
             round: false,
+            negacyclic: false,
         }
     }
 
