@@ -132,7 +132,7 @@ impl Encoder {
         })
     }
 
-    /// After an homomorphic operation, update an encoder using the variance
+    /// After a homomorphic operation, update an encoder using the variance
     /// # Arguments
     /// * `variance` - variance
     /// # Output
@@ -226,7 +226,7 @@ impl Encoder {
     /// # Arguments
     /// * `message` - a message as a f64
     /// # Output
-    /// * a new instantiation of an Plaintext containing only one encoded value (the one we just computed with this function)
+    /// * a new instantiation of a Plaintext containing only one encoded value (the one we just computed with this function)
     /// # Example
     /// ```rust
     /// use concrete::Encoder;
@@ -608,7 +608,7 @@ impl Encoder {
         read_from_file(path)
     }
 
-    /// Modify the encoding to be use after an homomorphic opposite
+    /// Modify the encoding to be use after a homomorphic opposite
     /// ```rust
     /// use concrete::Encoder;
     ///
