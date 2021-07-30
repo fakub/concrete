@@ -60,7 +60,7 @@ impl LWEBSK {
         }
 
         // check that the input encoder has at least 1 bit of padding
-        if encoder_input.nb_bit_padding == 0 {
+        if encoder_input.nb_bit_padding == 0 && !encoder_input.negacyclic {
             return Err(NotEnoughPaddingError!(encoder_input.nb_bit_padding, 1));
         }
 

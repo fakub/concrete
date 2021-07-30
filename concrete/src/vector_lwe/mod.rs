@@ -2406,6 +2406,7 @@ impl VectorLWE {
             nb_bit_precision: self.encoders[0].nb_bit_precision,
             nb_bit_padding: self.encoders[0].nb_bit_padding - nb_bit_padding_consumed,
             round: self.encoders[0].round,
+            negacyclic: false,
         };
         new_encoder.update_precision_from_variance(new_var)?;
         Ok(VectorLWE {
