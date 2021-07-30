@@ -444,7 +444,7 @@ impl LWE {
         Ok(())
     }
 
-    /// Compute an homomorphic addition between two LWE ciphertexts
+    /// Compute a homomorphic addition between two LWE ciphertexts
     ///
     /// # Arguments
     /// * `ct` - an LWE struct
@@ -494,7 +494,7 @@ impl LWE {
         Ok(res)
     }
 
-    /// Compute an homomorphic addition between two LWE ciphertexts
+    /// Compute a homomorphic addition between two LWE ciphertexts
     ///
     /// # Arguments
     /// * `ct` - an LWE struct
@@ -573,7 +573,7 @@ impl LWE {
         Ok(())
     }
 
-    /// Compute an homomorphic addition between two LWE ciphertexts.
+    /// Compute a homomorphic addition between two LWE ciphertexts.
     /// The center of the output Encoder is the sum of the two centers of the input Encoders.
     /// # Arguments
     /// * `ct` - an LWE struct
@@ -617,7 +617,7 @@ impl LWE {
         Ok(res)
     }
 
-    /// Compute an homomorphic addition between two LWE ciphertexts.
+    /// Compute a homomorphic addition between two LWE ciphertexts.
     /// The center of the output Encoder is the sum of the two centers of the input Encoders
     ///
     /// # Arguments
