@@ -1855,7 +1855,7 @@ impl LWE {
             return Err(DimensionError!(self.dimension, bsk.get_lwe_dimension()));
         }
 
-        // generate the look up table (throw error if a bit of padding is missing)
+        // generate the look up table (throw error if a bit of padding is missing, unless negacyclic)
         let lut = bsk.generate_functional_look_up_table(&self.encoder, encoder_output, f)?;
 
         // build the trivial accumulator

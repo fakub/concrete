@@ -66,35 +66,51 @@ impl LWEBSK {
 
         // clone the input encoder and set nb_bit_padding to 1
         let mut encoder_input_clone = encoder_input.clone();
-        encoder_input_clone.nb_bit_padding = 1;
+        let negacyclic_bit_extra: usize = if encoder_input.negacyclic {1} else {0};
+        encoder_input_clone.nb_bit_padding = 1 - negacyclic_bit_extra;
 
         // allocation of the result
         let mut result: Vec<Torus> = vec![0; self.polynomial_size];
 
         // find the right index to start storing -val_i instead of val_i
         let minus_start_index: usize =
-            self.polynomial_size - (self.polynomial_size >> (1 + encoder_input.nb_bit_precision));
+            self.polynomial_size - (self.polynomial_size >> (1 - negacyclic_bit_extra + encoder_input.nb_bit_precision));
 
         for (i, res) in result.iter_mut().enumerate() {
-            // create a valid encoding from i
-            let shift: usize = <Torus as Numeric>::BITS - self.get_polynomial_size_log() - 1;
-            let encoded: Torus = (i as Torus) << shift;
+            if encoder_input.negacyclic {
+                // calc half-future-stair (1 bit left for rounding, i.e., 0,0,0,0, 1,1,1,1, 2,2,2,2, ...)
+                let x_1 = i >> (self.get_polynomial_size_log() - encoder_input.nb_bit_precision);
+                // calc centered stairs (input to f, i.e., 0,0,0,0, 1,1,1,1, 1,1,1,1, 2,2,2,2, ..., 0,0,0,0)
+                // n.b., only half of precision is taken into account, the rest is negacyclic (therefore -1)
+                let x = ((x_1 >> 1) + (x_1 & 1)) & ((1 << (encoder_input.nb_bit_precision - 1)) - 1);
+                let f_val: Torus = (f(x as f64) as u64) << (<Torus as Numeric>::BITS - encoder_input.nb_bit_precision);
 
-            // decode the encoding
-            let decoded: f64 = encoder_input_clone.decode_core(encoded)?;
-
-            // apply the function
-            let f_decoded: f64 = f(decoded);
-
-            // encode the result
-            let output_encoded: Torus =
-                encoder_output.encode_outside_interval_operators(f_decoded)?;
-
-            *res = if i < minus_start_index {
-                output_encoded
+                *res = if i < minus_start_index {
+                    f_val
+                } else {
+                    f_val.wrapping_neg()
+                };
             } else {
-                output_encoded.wrapping_neg()
-            };
+                // create a valid encoding from i
+                let shift: usize = <Torus as Numeric>::BITS - self.get_polynomial_size_log() - 1;
+                let encoded: Torus = (i as Torus) << shift;
+
+                // decode the encoding
+                let decoded: f64 = encoder_input_clone.decode_core(encoded)?;
+
+                // apply the function
+                let f_decoded: f64 = f(decoded);
+
+                // encode the result
+                let output_encoded: Torus =
+                    encoder_output.encode_outside_interval_operators(f_decoded)?;
+
+                *res = if i < minus_start_index {
+                    output_encoded
+                } else {
+                    output_encoded.wrapping_neg()
+                };
+            }
         }
         Ok(result)
     }
