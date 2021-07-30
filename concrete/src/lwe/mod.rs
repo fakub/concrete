@@ -85,11 +85,11 @@ impl LWE {
         })
     }
 
-    /// Encode a message and then directly encrypt the plaintext into an LWE structure
+    /// Encode an f64 message and then directly encrypt the plaintext into an LWE structure
     ///
     /// # Arguments
     /// * `sk` - an LWE secret key
-    /// * `message` -  a  message as u64
+    /// * `message` -  a message as f64
     /// * `encoder` - an Encoder
     ///
     /// # Output
@@ -116,6 +116,55 @@ impl LWE {
         encoder: &crate::Encoder,
     ) -> Result<LWE, CryptoAPIError> {
         let plaintext = encoder.encode_core(message)?;
+        let mut result_encoder: crate::Encoder = encoder.clone();
+        let nb_bit_overlap: usize =
+            result_encoder.update_precision_from_variance(f64::powi(sk.std_dev, 2i32))?;
+
+        // notification of a problem
+        if nb_bit_overlap > 0 {
+            println!(
+                "{}: {} bit(s) with {} bit(s) of message originally. Consider increasing the dimension the reduce the amount of noise needed.",
+                "Loss of precision during encrypt".red().bold(),
+                nb_bit_overlap, encoder.nb_bit_precision
+            );
+        }
+
+        let mut res = LWE {
+            ciphertext: crypto::lwe::LweCiphertext::allocate(0, LweSize(sk.dimension + 1)),
+            variance: 0.,
+            dimension: sk.dimension,
+            encoder: result_encoder,
+        };
+        res.encrypt_raw(sk, plaintext).unwrap();
+
+        Ok(res)
+    }
+
+    /// Encode a u32 message and then directly encrypt the plaintext into an LWE structure
+    ///
+    /// # Arguments
+    /// * `sk` - an LWE secret key
+    /// * `message` -  a message as u32
+    /// * `encoder` - an Encoder
+    ///
+    /// # Output
+    /// an LWE structure
+    ///
+    pub fn encrypt_uint(
+        sk: &crate::LWESecretKey,
+        message: u32,
+        encoder: &crate::Encoder,
+    ) -> Result<LWE, CryptoAPIError> {
+        //
+        //  custom enoding:
+        //
+        //  ???????????.....        _____.....______
+        //  <  messy  ><msg>   =>   <pad><msg><zero>
+        //  does not work with padding == 0
+        //~ let plaintext = ((message as u64) << (<Torus as Numeric>::BITS - encoder.nb_bit_precision - encoder.nb_bit_padding))
+                      //~ & ((1u64 << (<Torus as Numeric>::BITS - encoder.nb_bit_padding)) - 1);
+        let plaintext = (message as u64) << (<Torus as Numeric>::BITS - encoder.nb_bit_precision);
+
         let mut result_encoder: crate::Encoder = encoder.clone();
         let nb_bit_overlap: usize =
             result_encoder.update_precision_from_variance(f64::powi(sk.std_dev, 2i32))?;
@@ -190,7 +239,7 @@ impl LWE {
         Ok(())
     }
 
-    /// Decrypt the ciphertext, meaning compute the phase and directly decode the output
+    /// Decrypt the ciphertext, meaning compute the phase and directly decode the output as f64
     ///
     /// # Arguments
     /// * `sk` - an LWE secret key
@@ -229,6 +278,34 @@ impl LWE {
 
         // decode
         let result: f64 = self.encoder.decode_single(output.0)?;
+
+        Ok(result)
+    }
+
+    /// Decrypt the ciphertext, meaning compute the phase and directly decode the output as u32
+    ///
+    /// # Arguments
+    /// * `sk` - an LWE secret key
+    /// # Output
+    /// * `result` - a u32
+    /// * DimensionError - if the ciphertext and the key have incompatible dimensions
+    pub fn decrypt_uint(&self, sk: &crate::LWESecretKey) -> Result<u32, CryptoAPIError> {
+        // check dimensions
+        if sk.dimension != self.dimension {
+            return Err(DimensionError!(self.dimension, sk.dimension));
+        }
+
+        // create a temporary variable to store the result of the phase computation
+        let mut output = Plaintext(0);
+
+        // compute the phase
+        sk.val.decrypt_lwe(&mut output, &self.ciphertext);
+
+        //
+        //  custom decoding:
+        //
+        let pre_round: u32 = (output.0 >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision - 1)) as u32;   // one extra bit
+        let result: u32 = (pre_round >> 1) + (pre_round & 1u32);   // rounding: if the last bit is 1, add 1 to the shifted result
 
         Ok(result)
     }
