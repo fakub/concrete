@@ -558,7 +558,7 @@ impl LWE {
         &mut self,
         ct: &crate::LWE,
     ) -> Result<(), CryptoAPIError> {
-        // check same paddings
+        // check negacyclicity
         if !self.encoder.negacyclic || !ct.encoder.negacyclic {
             return Err(InvalidEncoderError!(42,0.0));
         }
@@ -1334,6 +1334,11 @@ impl LWE {
         &mut self,
         k: i32,
     ) -> Result<(), CryptoAPIError> {
+        // check negacyclicity
+        if !self.encoder.negacyclic {
+            return Err(InvalidEncoderError!(42,0.2));
+        }
+
         // multiplication
         self.ciphertext
             .update_with_scalar_mul(Cleartext(k as Torus));
@@ -1690,12 +1695,9 @@ impl LWE {
     /// * InvalidEncoderError - if the encoder of the requested ciphertext is not valid (i.e. with nb_bit_precision = 0 or delta = 0)
     ///
     pub fn opposite_uint_inplace(&mut self) -> Result<(), CryptoAPIError> {
-        // check the encoders
-        if !self.encoder.is_valid() {
-            return Err(InvalidEncoderError!(
-                self.encoder.nb_bit_precision,
-                self.encoder.delta
-            ));
+        // check negacyclicity
+        if !self.encoder.negacyclic {
+            return Err(InvalidEncoderError!(42,0.2));
         }
 
         // compute the opposite
