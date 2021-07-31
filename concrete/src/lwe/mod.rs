@@ -1072,6 +1072,70 @@ impl LWE {
         Ok(())
     }
 
+    /// Compute homomorphic subtraction between two LWE ciphertexts
+    ///
+    /// # Arguments
+    /// * `ct` - an LWE struct
+    ///
+    /// # Output
+    /// * a new LWE
+    /// * DimensionError - if the ciphertexts have incompatible dimensions
+    /// * DeltaError - if the ciphertexts have incompatible deltas
+    /// * InvalidEncoderError - if the ciphertexts are not negacyclic or have different precision
+    ///
+    pub fn sub_uint(
+        &self,
+        ct: &crate::LWE,
+    ) -> Result<crate::LWE, CryptoAPIError> {
+        let mut res = self.clone();
+        res.sub_uint_inplace(ct)?;
+        Ok(res)
+    }
+
+    /// Compute homomorphic subtraction between two LWE ciphertexts
+    ///
+    /// # Arguments
+    /// * `ct` - an LWE struct
+    ///
+    /// # Output
+    /// * a new LWE
+    /// * DimensionError - if the ciphertexts have incompatible dimensions
+    /// * DeltaError - if the ciphertexts have incompatible deltas
+    /// * InvalidEncoderError - if the ciphertexts are not negacyclic or have different precision
+    ///
+    pub fn sub_uint_inplace(
+        &mut self,
+        ct: &crate::LWE,
+    ) -> Result<(), CryptoAPIError> {
+        // check negacyclicity
+        if !self.encoder.negacyclic || !ct.encoder.negacyclic {
+            return Err(InvalidEncoderError!(42,0.0));
+        }
+        else if self.encoder.nb_bit_precision != ct.encoder.nb_bit_precision {
+            return Err(InvalidEncoderError!(42,0.1));
+        }
+        // check same deltas
+        else if !deltas_eq!(self.encoder.delta, ct.encoder.delta) {
+            return Err(DeltaError!(self.encoder.delta, ct.encoder.delta));
+        }
+
+        // check the dimensions
+        if self.dimension != ct.dimension {
+            return Err(DimensionError!(self.dimension, ct.dimension));
+        }
+
+        // add ciphertexts together
+        self.ciphertext.update_with_sub(&ct.ciphertext);
+
+        // update the Encoder list and variances
+
+        // compute the new variance & update the encoder precision
+        self.variance = npe::add_ciphertexts(self.variance, ct.variance);
+        self.encoder.update_precision_from_variance(self.variance)?;
+
+        Ok(())
+    }
+
     /// Compute an subtraction between two LWE ciphertexts by eating one bit of padding.
     /// Note that the number of bits of message stays the same: min(nb1,nb2)
     ///
@@ -1697,7 +1761,7 @@ impl LWE {
     pub fn opposite_uint_inplace(&mut self) -> Result<(), CryptoAPIError> {
         // check negacyclicity
         if !self.encoder.negacyclic {
-            return Err(InvalidEncoderError!(42,0.2));
+            return Err(InvalidEncoderError!(42,0.3));
         }
 
         // compute the opposite
