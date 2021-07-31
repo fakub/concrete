@@ -1673,6 +1673,37 @@ impl LWE {
         Ok(())
     }
 
+    /// Compute the opposite of uint LWE ciphertext
+    ///
+    /// # Output
+    /// * a new LWE ciphertext
+    ///
+    pub fn opposite_uint(&self) -> Result<crate::LWE, CryptoAPIError> {
+        let mut res = self.clone();
+        res.opposite_uint_inplace()?;
+        Ok(res)
+    }
+
+    /// Compute the opposite of uint LWE ciphertext
+    ///
+    /// # Output
+    /// * InvalidEncoderError - if the encoder of the requested ciphertext is not valid (i.e. with nb_bit_precision = 0 or delta = 0)
+    ///
+    pub fn opposite_uint_inplace(&mut self) -> Result<(), CryptoAPIError> {
+        // check the encoders
+        if !self.encoder.is_valid() {
+            return Err(InvalidEncoderError!(
+                self.encoder.nb_bit_precision,
+                self.encoder.delta
+            ));
+        }
+
+        // compute the opposite
+        self.ciphertext.update_with_neg();
+
+        Ok(())
+    }
+
     /// Compute the opposite of the n-th LWE ciphertext in the structure
     ///
     /// # Output
