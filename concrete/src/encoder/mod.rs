@@ -378,6 +378,7 @@ impl Encoder {
         self.delta = encoder.delta;
         self.nb_bit_precision = encoder.nb_bit_precision;
         self.nb_bit_padding = encoder.nb_bit_padding;
+        self.negacyclic = encoder.negacyclic;
     }
 
     /// Crete a new encoder as if one computes a square function divided by 4
