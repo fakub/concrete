@@ -1309,6 +1309,47 @@ impl LWE {
         Ok(())
     }
 
+    /// Multiply uint LWE ciphertext with an integer. Changes the body and mask of the ciphertext
+    ///
+    /// # Argument
+    /// * `k` - integer to multiply with
+    ///
+    /// # Output
+    /// * a new LWE
+    ///
+    pub fn mul_uint_constant(&self, k: i32) -> Result<crate::LWE, CryptoAPIError> {
+        let mut res = self.clone();
+        res.mul_uint_constant_inplace(k)?;
+        Ok(res)
+    }
+
+    /// Multiply uint LWE ciphertext with an integer. Changes the body and mask of the ciphertext
+    ///
+    /// # Argument
+    /// * `k` - integer to multiply with
+    ///
+    pub fn mul_uint_constant_inplace(
+        &mut self,
+        k: i32,
+    ) -> Result<(), CryptoAPIError> {
+        // multiplication
+        self.ciphertext
+            .update_with_scalar_mul(Cleartext(k as Torus));
+
+        // compute the absolute value
+        let k_abs = k.abs();
+
+        // call to the NPE to estimate the new variance
+        self.variance = npe::LWE::single_scalar_mul(self.variance, k_abs as Torus);
+
+        if k_abs != 0 {
+            // update the encoder precision based on the variance
+            self.encoder.update_precision_from_variance(self.variance)?;
+        }
+
+        Ok(())
+    }
+
     /// Multiply LWE ciphertext with small integer message and does not change the encoding but changes the body and mask of the ciphertext
     ///
     /// # Argument
