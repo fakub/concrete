@@ -87,6 +87,27 @@ impl LWE {
         })
     }
 
+    /// Instantiate a new LWE filled with zeros from a dimension and add provided encoder
+    ///
+    /// # Arguments
+    /// * `dimension` - the length the LWE mask
+    /// * `encoder` - Encoder
+    ///
+    /// # Output
+    /// * a new instantiation of an LWE
+    ///
+    pub fn zero_with_encoder(
+        dimension: usize,
+        encoder: &crate::Encoder,
+    ) -> Result<crate::LWE, CryptoAPIError> {
+        Ok(LWE {
+            ciphertext: crypto::lwe::LweCiphertext::allocate(0, LweSize(dimension + 1)),
+            variance: 0.,
+            dimension,
+            encoder: encoder.clone(),
+        })
+    }
+
     /// Encode an f64 message and then directly encrypt the plaintext into an LWE structure
     ///
     /// # Arguments
@@ -157,6 +178,11 @@ impl LWE {
         message: u32,
         encoder: &crate::Encoder,
     ) -> Result<LWE, CryptoAPIError> {
+        // check negacyclicity
+        if !encoder.negacyclic {
+            return Err(InvalidEncoderError!(42,0.4));
+        }
+
         //
         //  custom enoding:
         //
@@ -560,10 +586,10 @@ impl LWE {
     ) -> Result<(), CryptoAPIError> {
         // check negacyclicity
         if !self.encoder.negacyclic || !ct.encoder.negacyclic {
-            return Err(InvalidEncoderError!(42,0.0));
+            return Err(InvalidEncoderError!(42,0.5));
         }
         else if self.encoder.nb_bit_precision != ct.encoder.nb_bit_precision {
-            return Err(InvalidEncoderError!(42,0.1));
+            return Err(InvalidEncoderError!(42,0.6));
         }
         // check same deltas
         else if !deltas_eq!(self.encoder.delta, ct.encoder.delta) {
@@ -1912,7 +1938,7 @@ impl LWE {
     /// ```
     pub fn keyswitch(&self, ksk: &crate::LWEKSK) -> Result<crate::LWE, CryptoAPIError> {
         // allocation for the result
-        let mut res: crate::LWE = crate::LWE::zero(ksk.dimension_after)?;
+        let mut res: crate::LWE = crate::LWE::zero_with_encoder(ksk.dimension_after, &self.encoder)?;
 
         // key switch
         ksk.ciphertexts
@@ -1927,9 +1953,6 @@ impl LWE {
             ksk.variance,
             self.variance,
         );
-
-        // copy the encoders
-        res.encoder.copy(&self.encoder);
 
         // update the precision
         let nb_bit_overlap: usize = res.encoder.update_precision_from_variance(res.variance)?;
@@ -2132,10 +2155,12 @@ impl LWE {
                 - bsk.get_polynomial_size_log()
                 - 1;
 
-            new_encoder_output.nb_bit_precision = i32::max(
-                new_encoder_output.nb_bit_precision as i32 - nb_bit_loss as i32,
-                0i32,
-            ) as usize;
+            if !new_encoder_output.negacyclic {
+                new_encoder_output.nb_bit_precision = i32::max(
+                    new_encoder_output.nb_bit_precision as i32 - nb_bit_loss as i32,
+                    0i32,
+                ) as usize;
+            }
             // drift
             println!(
                 "{}: {} bit(s) of precision lost over {} bit(s) of message originally ({} bits are affected by the noise). Consider increasing the polynomial size of the RLWE secret key.",
