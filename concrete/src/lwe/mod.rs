@@ -316,6 +316,11 @@ impl LWE {
     /// * `result` - a u32
     /// * DimensionError - if the ciphertext and the key have incompatible dimensions
     pub fn decrypt_uint(&self, sk: &crate::LWESecretKey) -> Result<u32, CryptoAPIError> {
+        // trivial case
+        if self.dimension == 0 {
+            return Ok(0);
+        }
+
         // check dimensions
         if sk.dimension != self.dimension {
             return Err(DimensionError!(self.dimension, sk.dimension));
@@ -582,6 +587,19 @@ impl LWE {
         &mut self,
         ct: &crate::LWE,
     ) -> Result<(), CryptoAPIError> {
+        // trivial cases
+        if self.dimension == 0 {
+            // copy ct into self (can also be of zero dimension)
+            //TODO some systematic approach desired
+            self.ciphertext = ct.ciphertext.clone();
+            self.variance   = ct.variance;
+            self.dimension  = ct.dimension;
+            self.encoder    = ct.encoder.clone();
+        } else if ct.dimension == 0 {
+            // do nothing
+            return Ok(());
+        }
+
         // check negacyclicity
         if !self.encoder.negacyclic || !ct.encoder.negacyclic {
             return Err(InvalidEncoderError!(42,0.5));
@@ -1131,6 +1149,19 @@ impl LWE {
         &mut self,
         ct: &crate::LWE,
     ) -> Result<(), CryptoAPIError> {
+        // trivial cases
+        if self.dimension == 0 {
+            // copy ct into self (can also be of zero dimension)
+            //TODO some systematic approach desired
+            self.ciphertext = ct.ciphertext.clone();
+            self.variance   = ct.variance;
+            self.dimension  = ct.dimension;
+            self.encoder    = ct.encoder.clone();
+        } else if ct.dimension == 0 {
+            // do nothing
+            return Ok(());
+        }
+
         // check negacyclicity
         if !self.encoder.negacyclic || !ct.encoder.negacyclic {
             return Err(InvalidEncoderError!(42,0.0));
@@ -1422,6 +1453,12 @@ impl LWE {
         &mut self,
         k: i32,
     ) -> Result<(), CryptoAPIError> {
+        // trivial case
+        if self.dimension == 0 {
+            // do nothing
+            return Ok(());
+        }
+
         // check negacyclicity
         if !self.encoder.negacyclic {
             return Err(InvalidEncoderError!(42,0.2));
@@ -1783,6 +1820,12 @@ impl LWE {
     /// * InvalidEncoderError - if the encoder of the requested ciphertext is not valid (i.e. with nb_bit_precision = 0 or delta = 0)
     ///
     pub fn opposite_uint_inplace(&mut self) -> Result<(), CryptoAPIError> {
+        // trivial case
+        if self.dimension == 0 {
+            // do nothing
+            return Ok(());
+        }
+
         // check negacyclicity
         if !self.encoder.negacyclic {
             return Err(InvalidEncoderError!(42,0.3));
