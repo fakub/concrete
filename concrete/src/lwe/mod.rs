@@ -593,11 +593,8 @@ impl LWE {
             return Ok(());
         } else if self.dimension == 0 {
             // copy ct into self (can also be of zero dimension)
-            //TODO some systematic approach desired
-            self.ciphertext = ct.ciphertext.clone();
-            self.variance   = ct.variance;
-            self.dimension  = ct.dimension;
-            self.encoder    = ct.encoder.clone();
+            *self = ct.clone();
+            return Ok(());
         }
 
         // check negacyclicity
@@ -1155,11 +1152,8 @@ impl LWE {
             return Ok(());
         } else if self.dimension == 0 {
             // copy ct into self (can also be of zero dimension)
-            //TODO some systematic approach desired
-            self.ciphertext = ct.ciphertext.clone();
-            self.variance   = ct.variance;
-            self.dimension  = ct.dimension;
-            self.encoder    = ct.encoder.clone();
+            *self = ct.opposite_uint()?;
+            return Ok(());
         }
 
         // check negacyclicity
