@@ -347,9 +347,9 @@ impl LWE {
     pub fn decrypt_uint(&self, sk: &crate::LWESecretKey) -> Result<u32, CryptoAPIError> {
         // trivial case
         if self.dimension == 0 {
-            let (body, _) = self.ciphertext.as_tensor().split_last();
+            let self_body = self.ciphertext.get_body();
             // get rid of trailing zeros
-            return Ok((body >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision)) as u32);
+            return Ok((self_body.0 >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision)) as u32);
         }
 
         // check dimensions
@@ -620,19 +620,23 @@ impl LWE {
     ) -> Result<(), CryptoAPIError> {
         // trivial cases
         if ct.dimension == 0 {
-            // do nothing
-            //FIXME add shifted value from this trivial sample
+            let self_body = self.ciphertext.get_mut_body();     // get_mut_body_and_mask(); etc..
+            let   ct_body =   ct.ciphertext.get_body();
 
-            // backup solution: (useful for addition?)
-            //~ let (body, _) = res/LWE/.ciphertext.get_mut_body_and_mask();   // w/o mut: /LWE/.ciphertext.as_tensor().split_last()
-
-            //~ // add the encoded message
-            //~ body.0 = body.0.wrapping_add(plaintext);
+            // add the encoded message
+            self_body.0 = self_body.0.wrapping_add(ct_body.0);
 
             return Ok(());
         } else if self.dimension == 0 {
+            let self_orig_body = self.ciphertext.get_body().clone();   //FIXME is this ok?
+
             // copy ct into self (can also be of zero dimension)
             *self = ct.clone();
+            let self_body = self.ciphertext.get_mut_body();
+
+            // add the encoded message
+            self_body.0 = self_body.0.wrapping_add(self_orig_body.0);
+
             return Ok(());
         }
 
@@ -1187,12 +1191,23 @@ impl LWE {
     ) -> Result<(), CryptoAPIError> {
         // trivial cases
         if ct.dimension == 0 {
-            //FIXME add shifted value from this trivial sample
-            // do nothing
+            let self_body = self.ciphertext.get_mut_body();     // get_mut_body_and_mask(); etc..
+            let   ct_body =   ct.ciphertext.get_body();
+
+            // add the encoded message
+            self_body.0 = self_body.0.wrapping_sub(ct_body.0);
+
             return Ok(());
         } else if self.dimension == 0 {
+            let self_orig_body = self.ciphertext.get_body().clone();   //FIXME is this ok?
+
             // copy ct into self (can also be of zero dimension)
             *self = ct.opposite_uint()?;
+            let self_body = self.ciphertext.get_mut_body();
+
+            // add the encoded message
+            self_body.0 = self_body.0.wrapping_add(self_orig_body.0);
+
             return Ok(());
         }
 
