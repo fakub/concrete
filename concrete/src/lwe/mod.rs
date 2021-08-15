@@ -234,14 +234,12 @@ impl LWE {
 
         let result_encoder: crate::Encoder = encoder.clone();
 
-        let mut res = LWE {
+        Ok(LWE {
             ciphertext: crypto::lwe::LweCiphertext::allocate(plaintext, LweSize(1)),
             variance: 0.,
             dimension: 0,
             encoder: result_encoder,
-        };
-
-        Ok(res)
+        })
     }
 
     /// Encrypt a raw plaintext (a Torus element instead of a struct Plaintext) with the provided key and standard deviation
