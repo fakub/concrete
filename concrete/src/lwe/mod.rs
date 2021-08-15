@@ -193,18 +193,7 @@ impl LWE {
                       //~ & ((1u64 << (<Torus as Numeric>::BITS - encoder.nb_bit_padding)) - 1);
         let plaintext = (message as u64) << (<Torus as Numeric>::BITS - encoder.nb_bit_precision);
 
-        let mut result_encoder: crate::Encoder = encoder.clone();
-        let nb_bit_overlap: usize =
-            result_encoder.update_precision_from_variance(f64::powi(sk.std_dev, 2i32))?;
-
-        // notification of a problem
-        if nb_bit_overlap > 0 {
-            println!(
-                "{}: {} bit(s) with {} bit(s) of message originally. Consider increasing the dimension the reduce the amount of noise needed.",
-                "Loss of precision during encrypt".red().bold(),
-                nb_bit_overlap, encoder.nb_bit_precision
-            );
-        }
+        let result_encoder: crate::Encoder = encoder.clone();
 
         let mut res = LWE {
             ciphertext: crypto::lwe::LweCiphertext::allocate(0, LweSize(sk.dimension + 1)),
@@ -213,6 +202,46 @@ impl LWE {
             encoder: result_encoder,
         };
         res.encrypt_raw(sk, plaintext).unwrap();
+
+        Ok(res)
+    }
+
+    /// Encode a u32 message and then directly encrypt the plaintext into an LWE structure without any mask (trivial ciphertext)
+    ///
+    /// # Arguments
+    /// * `message` -  a message as u32
+    /// * `encoder` - an Encoder
+    ///
+    /// # Output
+    /// an LWE structure
+    ///
+    pub fn encrypt_uint_triv(
+        message: u32,
+        encoder: &crate::Encoder,
+    ) -> Result<LWE, CryptoAPIError> {
+        // check negacyclicity
+        if !encoder.negacyclic {
+            return Err(InvalidEncoderError!(42,0.4));
+        }
+
+        //
+        //  custom enoding:
+        //
+        //  ???????????.....        _____.....______
+        //  <  messy  ><msg>   =>   <pad><msg><zero>
+        //  does not work with padding == 0
+        //~ let plaintext = ((message as u64) << (<Torus as Numeric>::BITS - encoder.nb_bit_precision - encoder.nb_bit_padding))
+                      //~ & ((1u64 << (<Torus as Numeric>::BITS - encoder.nb_bit_padding)) - 1);
+        let plaintext = (message as u64) << (<Torus as Numeric>::BITS - encoder.nb_bit_precision);
+
+        let result_encoder: crate::Encoder = encoder.clone();
+
+        let mut res = LWE {
+            ciphertext: crypto::lwe::LweCiphertext::allocate(plaintext, LweSize(1)),
+            variance: 0.,
+            dimension: 0,
+            encoder: result_encoder,
+        };
 
         Ok(res)
     }
@@ -320,7 +349,9 @@ impl LWE {
     pub fn decrypt_uint(&self, sk: &crate::LWESecretKey) -> Result<u32, CryptoAPIError> {
         // trivial case
         if self.dimension == 0 {
-            return Ok(0);
+            let (body, _) = self.ciphertext.as_tensor().split_last();
+            // get rid of trailing zeros
+            return Ok((body >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision)) as u32);
         }
 
         // check dimensions
@@ -592,6 +623,14 @@ impl LWE {
         // trivial cases
         if ct.dimension == 0 {
             // do nothing
+            //FIXME add shifted value from this trivial sample
+
+            // backup solution: (useful for addition?)
+            //~ let (body, _) = res/LWE/.ciphertext.get_mut_body_and_mask();   // w/o mut: /LWE/.ciphertext.as_tensor().split_last()
+
+            //~ // add the encoded message
+            //~ body.0 = body.0.wrapping_add(plaintext);
+
             return Ok(());
         } else if self.dimension == 0 {
             // copy ct into self (can also be of zero dimension)
@@ -1150,6 +1189,7 @@ impl LWE {
     ) -> Result<(), CryptoAPIError> {
         // trivial cases
         if ct.dimension == 0 {
+            //FIXME add shifted value from this trivial sample
             // do nothing
             return Ok(());
         } else if self.dimension == 0 {
@@ -1451,6 +1491,7 @@ impl LWE {
     ) -> Result<(), CryptoAPIError> {
         // trivial case
         if self.dimension == 0 {
+            //FIXME add shifted value from this trivial sample
             // do nothing
             return Ok(());
         }
@@ -1819,6 +1860,7 @@ impl LWE {
         // trivial case
         if self.dimension == 0 {
             // do nothing
+            //FIXME add shifted value from this trivial sample
             return Ok(());
         }
 
