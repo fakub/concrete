@@ -630,7 +630,7 @@ impl LWE {
 
             return Ok(());
         } else if self.dimension == 0 {
-            let self_orig_body = self.ciphertext.get_body().clone();   //FIXME is this ok?
+            let self_orig_body = self.ciphertext.get_body().clone();   //FIXME is this needed to be cloned?
 
             // copy ct into self (can also be of zero dimension)
             *self = ct.clone();
@@ -1201,7 +1201,7 @@ impl LWE {
 
             return Ok(());
         } else if self.dimension == 0 {
-            let self_orig_body = self.ciphertext.get_body().clone();   //FIXME is this ok?
+            let self_orig_body = self.ciphertext.get_body().clone();
 
             // copy ct into self (can also be of zero dimension)
             *self = ct.opposite_uint()?;
@@ -1506,8 +1506,11 @@ impl LWE {
     ) -> Result<(), CryptoAPIError> {
         // trivial case
         if self.dimension == 0 {
-            //FIXME add shifted value from this trivial sample
-            // do nothing
+            let self_body = self.ciphertext.get_mut_body();
+
+            // multiply the message body
+            self_body.0 = self_body.0.wrapping_mul(k as Torus);
+
             return Ok(());
         }
 
@@ -1874,8 +1877,11 @@ impl LWE {
     pub fn opposite_uint_inplace(&mut self) -> Result<(), CryptoAPIError> {
         // trivial case
         if self.dimension == 0 {
-            // do nothing
-            //FIXME add shifted value from this trivial sample
+            let self_body = self.ciphertext.get_mut_body();
+
+            // negate the message body
+            self_body.0 = self_body.0.wrapping_neg();
+
             return Ok(());
         }
 
