@@ -628,7 +628,7 @@ impl LWE {
 
             return Ok(());
         } else if self.dimension == 0 {
-            let self_orig_body = self.ciphertext.get_body().clone();   //FIXME is this needed to be cloned?
+            let self_orig_body = self.ciphertext.get_body().clone();
 
             // copy ct into self (can also be of zero dimension)
             *self = ct.clone();
