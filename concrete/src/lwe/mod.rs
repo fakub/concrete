@@ -348,8 +348,14 @@ impl LWE {
         // trivial case
         if self.dimension == 0 {
             let self_body = self.ciphertext.get_body();
-            // get rid of trailing zeros
-            return Ok((self_body.0 >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision)) as u32);
+
+            return if self_body.0 == 0 {
+                // for zero body, encoder might be zero, too
+                Ok(0u32)
+            } else {
+                // get rid of trailing zeros (encoder must be non-zero for non-zero body)
+                Ok((self_body.0 >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision)) as u32)
+            };
         }
 
         // check dimensions
