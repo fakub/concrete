@@ -347,15 +347,7 @@ impl LWE {
     pub fn decrypt_uint(&self, sk: &crate::LWESecretKey) -> Result<u32, CryptoAPIError> {
         // trivial case
         if self.dimension == 0 {
-            let self_body = self.ciphertext.get_body();
-
-            return if self_body.0 == 0 {
-                // for zero body, encoder might be zero, too
-                Ok(0u32)
-            } else {
-                // get rid of trailing zeros (encoder must be non-zero for non-zero body)
-                Ok((self_body.0 >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision)) as u32)
-            };
+            return self.decrypt_uint_triv();
         }
 
         // check dimensions
@@ -376,6 +368,28 @@ impl LWE {
         let result: u32 = (pre_round >> 1) + (pre_round & 1u32);   // rounding: if the last bit is 1, add 1 to the shifted result
 
         Ok(result)
+    }
+
+    /// Decode the trivial ciphertext as u32 (where secret key is not present)
+    ///
+    /// # Output
+    /// * `result` - a u32
+    /// * DimensionError - if the ciphertext is not trivial
+    pub fn decrypt_uint_triv(&self) -> Result<u32, CryptoAPIError> {
+        // check triviality
+        if self.dimension != 0 {
+            return Err(DimensionError!(self.dimension, 0));
+        }
+
+        let self_body = self.ciphertext.get_body();
+
+        if self_body.0 == 0 {
+            // for zero body, encoder might be zero, too
+            Ok(0u32)
+        } else {
+            // get rid of trailing zeros (encoder must be non-zero for non-zero body)
+            Ok((self_body.0 >> (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision)) as u32)
+        }
     }
 
     /// Decrypt the ciphertext, meaning compute the phase and directly decode the output as if the encoder was in a rounding context
