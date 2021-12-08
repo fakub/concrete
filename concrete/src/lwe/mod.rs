@@ -1522,13 +1522,21 @@ impl LWE {
         &mut self,
         k: i32,
     ) -> Result<(), CryptoAPIError> {
-        // trivial case
+        // trivial cases
         if self.dimension == 0 {
             let self_body = self.ciphertext.get_mut_body();
 
             // multiply the message body
             self_body.0 = self_body.0.wrapping_mul(k as Torus);
 
+            return Ok(());
+        }
+        // the following fixes a problem with half-trivial multiplication:
+        // 0 · [x] + 0 · [y]      (n.b., not fully understood what is the problem!)
+        if k == 0 {
+            self.ciphertext = crypto::lwe::LweCiphertext::allocate(0, LweSize(1));
+            self.variance = 0.;
+            self.dimension = 0;
             return Ok(());
         }
 
