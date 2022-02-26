@@ -370,6 +370,33 @@ impl LWE {
         Ok(result)
     }
 
+    /// Decrypt the ciphertext *without rounding*
+    ///
+    /// # Arguments
+    /// * `sk` - an LWE secret key
+    /// # Output
+    /// * `result` - a u32
+    /// * DimensionError - if the ciphertext and the key have incompatible dimensions
+    pub fn decrypt_uint_no_rounding(&self, sk: &crate::LWESecretKey) -> Result<u64, CryptoAPIError> {
+        // trivial case
+        if self.dimension == 0 {
+            return Err(NoNoiseInCiphertext!(0.0));
+        }
+
+        // check dimensions
+        if sk.dimension != self.dimension {
+            return Err(DimensionError!(self.dimension, sk.dimension));
+        }
+
+        // create a temporary variable to store the result of the phase computation
+        let mut output = Plaintext(0);
+
+        // compute the phase
+        sk.val.decrypt_lwe(&mut output, &self.ciphertext);
+
+        Ok(output.0)
+    }
+
     /// Decode the trivial ciphertext as u32 (where secret key is not present)
     ///
     /// # Output
