@@ -219,7 +219,7 @@ impl LWE {
     ) -> Result<LWE, CryptoAPIError> {
         // check negacyclicity
         if !encoder.negacyclic {
-            return Err(InvalidEncoderError!(42,0.4));
+            return Err(InvalidEncoderError!(42,0.45));
         }
 
         //
@@ -682,7 +682,14 @@ impl LWE {
 
         // compute the new variance & update the encoder precision
         self.variance = npe::add_ciphertexts(self.variance, ct.variance);
-        self.encoder.update_precision_from_variance(self.variance)?;
+
+        // check the encoder precision based on the variance
+        // (was: self.encoder.update_precision_from_variance(self.variance)?;)
+        let nb_noise_bit = npe::nb_bit_from_variance_99(self.variance, <Torus as Numeric>::BITS);
+        // noise has grown too much & it consumes bits of message
+        if nb_noise_bit + self.encoder.nb_bit_precision + self.encoder.nb_bit_padding > <Torus as Numeric>::BITS {
+            return Err(InvalidEncoderError!(42,0.8));
+        }
 
         Ok(())
     }
@@ -1253,7 +1260,14 @@ impl LWE {
 
         // compute the new variance & update the encoder precision
         self.variance = npe::add_ciphertexts(self.variance, ct.variance);
-        self.encoder.update_precision_from_variance(self.variance)?;
+
+        // check the encoder precision based on the variance
+        // (was: self.encoder.update_precision_from_variance(self.variance)?;)
+        let nb_noise_bit = npe::nb_bit_from_variance_99(self.variance, <Torus as Numeric>::BITS);
+        // noise has grown too much & it consumes bits of message
+        if nb_noise_bit + self.encoder.nb_bit_precision + self.encoder.nb_bit_padding > <Torus as Numeric>::BITS {
+            return Err(InvalidEncoderError!(42,0.9));
+        }
 
         Ok(())
     }
@@ -1554,8 +1568,13 @@ impl LWE {
         self.variance = npe::LWE::single_scalar_mul(self.variance, k_abs as Torus);
 
         if k_abs != 0 {
-            // update the encoder precision based on the variance
-            self.encoder.update_precision_from_variance(self.variance)?;
+            // check the encoder precision based on the variance
+            // (was: self.encoder.update_precision_from_variance(self.variance)?;)
+            let nb_noise_bit = npe::nb_bit_from_variance_99(self.variance, <Torus as Numeric>::BITS);
+            // noise has grown too much & it consumes bits of message
+            if nb_noise_bit + self.encoder.nb_bit_precision + self.encoder.nb_bit_padding > <Torus as Numeric>::BITS {
+                return Err(InvalidEncoderError!(42,0.11));
+            }
         }
 
         Ok(())
