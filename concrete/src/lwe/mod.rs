@@ -694,6 +694,28 @@ impl LWE {
         Ok(())
     }
 
+    /// Add 1/2 to message
+    ///
+    /// # Arguments
+    /// * `ct` - LWE ciphertext
+    ///
+    pub fn add_half_to_uint_inplace(
+        &mut self,
+    ) -> Result<(), CryptoAPIError> {
+        // check negacyclicity
+        if !self.encoder.negacyclic {
+            return Err(InvalidEncoderError!(42,0.12));
+        }
+
+        let half_in_torus = 1 << (<Torus as Numeric>::BITS - self.encoder.nb_bit_precision - 1);
+        let self_body = self.ciphertext.get_mut_body();
+
+        // add the encoded message
+        self_body.0 = self_body.0.wrapping_add(half_in_torus);
+
+        Ok(())
+    }
+
     /// Compute a homomorphic addition between two LWE ciphertexts
     ///
     /// # Arguments

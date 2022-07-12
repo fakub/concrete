@@ -83,7 +83,9 @@ impl LWEBSK {
                 // calc centered stairs (input to f, i.e., 0,0,0,0, 1,1,1,1, 1,1,1,1, 2,2,2,2, ..., 0,0,0,0)
                 // n.b., only half of precision is taken into account, the rest is negacyclic (therefore -1)
                 let x = ((x_1 >> 1) + (x_1 & 1)) & ((1 << (encoder_input.nb_bit_precision - 1)) - 1);
-                let f_val: Torus = (f(x as f64) as u64) << (<Torus as Numeric>::BITS - encoder_input.nb_bit_precision);
+                // allow halves in PBS function
+                let f_val: Torus = ((f(x as f64) * 2.0) as u64) << (<Torus as Numeric>::BITS - encoder_input.nb_bit_precision - 1);
+                // was: let f_val: Torus = (f(x as f64) as u64) << (<Torus as Numeric>::BITS - encoder_input.nb_bit_precision);
 
                 *res = if i < minus_start_index {
                     f_val
